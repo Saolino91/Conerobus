@@ -43,7 +43,9 @@ def get_stops_by_route(route_id: str):
     merged = stops_for_route.merge(stops, on="stop_id", how="left")
 
     merged = merged.sort_values("stop_sequence")
-    merged = merged[["stop_id", "stop_name", "stop_lat", "stop_lon", "arrival_time"]].drop_duplicates()
+    merged["shape_id"] = route_trips["shape_id"].iloc[0]  # aggiunge shape_id alla risposta
+merged = merged[["stop_id", "stop_name", "stop_lat", "stop_lon", "arrival_time", "shape_id"]].drop_duplicates()
+
 
     return merged.to_dict(orient="records")
 
