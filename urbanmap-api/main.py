@@ -33,21 +33,31 @@ def get_routes():
 # ------------------------
 @app.get("/stops/{route_id}")
 def get_stops_by_route(route_id: str):
-    # Trova i trip per quella route
+    # Trova i trip associati alla route
     route_trips = trips[trips["route_id"] == route_id]
     if route_trips.empty:
         raise HTTPException(status_code=404, detail="Linea non trovata")
 
     trip_ids = route_trips["trip_id"].unique()
+
+    # Mappa trip_id → shape_id
+    trip_shape_map = route_trips.set_index("trip_id")["shape_id"].to_dict()
+
+    # Filtra stop_times
     stops_for_route = stop_times[stop_times["trip_id"].isin(trip_ids)]
-    merged = stops_for_route.merge(stops, on="stop_id", how="left")
+    stops_for_route = stops_for_route.merge(stops, on="stop_id", how="left")
 
-    merged = merged.sort_values("stop_sequence")
-    merged["shape_id"] = route_trips["shape_id"].iloc[0]  # aggiunge shape_id alla risposta
-merged = merged[["stop_id", "stop_name", "stop_lat", "stop_lon", "arrival_time", "shape_id"]].drop_duplicates()
+    # Aggiunge shape_id a ogni fermata (in base a trip_id)
+    stops_for_route["shape_id"] = stops_for_route["trip_id"].map(trip_shape_map)
 
+    # Ordina e seleziona colonne finali
+    stops_for_route = stops_for_route.sort_values("stop_sequence")
+    stops_for_route = stops_for_route[[
+        "stop_id", "stop_name", "stop_lat", "stop_lon", "arrival_time", "shape_id"
+    ]].drop_duplicates()
 
-    return merged.to_dict(orient="records")
+    return stops_for_route.to_dict(orient="records")
+
 
 
 # ------------------------
