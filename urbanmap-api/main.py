@@ -16,6 +16,10 @@ shapes = pd.read_csv("shapes.txt", dtype={"shape_id": str})
 
 routes = pd.read_csv(os.path.join(DATA_DIR, "routes.txt"))
 
+@app.get("/")
+def read_root():
+    return {"message": "🚍 API Conerobus attiva! Visita /routes, /stops/{route_id}, /shapes/{shape_id}"}
+
 # ------------------------
 # API - Elenco linee
 # ------------------------
